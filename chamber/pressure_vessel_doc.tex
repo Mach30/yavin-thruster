@@ -1,0 +1,77 @@
+%!TEX TS-program = sage
+\documentclass{article}
+\title{Pressure Vessel Calculation for Yavin Thruster}
+\author{J. Simmons}
+
+\usepackage{sagetex}
+\setlength{\sagetexindent}{10ex}
+
+\begin{document}
+\maketitle
+
+% start content here
+\section{Requirements}
+The Pressure Vessel Calculation module is being created to model the stresses in the chamber wall for use in a sizing loop to determine the required wall thickness in the Yavin Thruster's chamber.  The resulting wall thickness will be used to drive the chamber wall thickness parameter in the CAD Query model of the Yavin Thruster.  This approach will give a CAD model that can parametrically size and generate geometry from the thruster's design variables and operating conditions. 
+
+The key design variables driving the pressure vessel calculation include the chamber's inner radius, the yield strength of the selected chamber material, the desired factor of safety, and the chamber pressure.  The key operating condition is the ambient pressure.  The single result of running the pressure vessel calculation is the required wall thickness. Metric units will be used for all calculations and results.  Table~\ref{t:parameters} lists all required variables and their units.
+
+\begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
+  \caption{Pressure Vessel Calculation Parameters}
+  \centering
+  \begin{tabular}{llll}
+   Direction & Name & Symbol & Units \\
+	\hline\hline
+     Inputs & & &\\
+     	        & Chamber Inner Radius & $r_i$ & m \\
+                & Yield Strength & $\sigma_y$ & MPa \\
+                & Chamber Pressure & $P_c$ & Pa \\
+                & Ambient Pressure & $P_{amb}$ & Pa \\
+                & Factor of Safety & $FS$ & \\
+      Outputs & & & \\
+                & Chamber Wall Thickness & $t$ & m \\
+	\hline
+  \end{tabular}
+ \label{t:parameters}
+\end{table}
+
+
+\section{Theory}
+The chamber wall is being modeled as a thick walled cylinder [add explanation of why this is the correct model].  The sizing loop will find the minimum wall thickness which yields a maximum stress in the chamber wall within the stress material's yield strength, including factor of safety.  The stresses calculated during the sizing loop are the tangential and radial stress.  Equation~(\ref{e:sigma_t}) shows the calculation for the tangential stress in a thick walled cylinder and Equation~(\ref{e:sigma_r}) shows the calculation for the radial stress in a thick walled cylinder \cite{Shigley1989}. 
+
+\begin{equation}
+ \label{e:sigma_t}
+  \sigma_t = \frac{p_i r_i^2 - p_o r_o^2 - r_i^2 r_o^2 (p_o - p_i)/r^2}{r_o^2 - r_i^2}
+\end{equation}
+
+\begin{equation}
+ \label{e:sigma_r}
+  \sigma_r = \frac{p_i r_i^2 - p_o r_o^2 + r_i^2 r_o^2 (p_o - p_i)/r^2}{r_o^2 - r_i^2}
+\end{equation}
+
+The equations above are in a generic form and can be applied to a number of design scenarios.  Table~\ref{t:parameter_mapping} shows how the variables in Equation~(\ref{e:sigma_t}) and Equation~(\ref{e:sigma_r}) map to the parameters in Table~\ref{t:parameters}.  [Explain the point of interest]
+
+\begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
+  \caption{Pressure Vessel Calculation Parameters}
+  \centering
+  \begin{tabular}{llll}
+   Thick Walled Variable (units) & Symbol & Relation to Design Parameters \\
+	\hline\hline
+	Tangential Stress (Pa) & $\sigma_t$ & n/a \\
+	Radial Stress (Pa) & $\sigma_r$  & n/a \\
+	Internal Pressure (Pa) & $p_i$ & $= P_c$\\
+	External Pressure (Pa) & $p_o$ & $= P_{amb}$\\
+	Inside Radius (m) & $r_i$ & $= r_i$\\
+	Outside Radius (m) & $r_o$ & $= r_i + t$\\
+	Radius at the Point of Interest (m) & $r$ & $= r_i$\\
+	\hline
+  \end{tabular}
+ \label{t:parameter_mapping}
+\end{table}
+
+\section{Implementation}
+[insert code inspection into this section]
+
+\section{Tests}
+[insert test cases and their results into this section]
+
+\end{document}
