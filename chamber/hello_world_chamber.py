@@ -22,6 +22,8 @@ from Helpers import show
 
 # TODO: Integrate Pint: http://www.google.com/url?q=http%3A%2F%2Fopendesignengine.net%2Fdmsf_files%2F478%3Fdownload%3D&sa=D&sntz=1&usg=AFQjCNF8piQ2QOI9d1x9YfKzfeyqgaa0Bg
 
+# TODO: Change angle name to theta
+
 angle_degrees = 45  # The chamber taper angle in degrees
 angle_radians = math.radians(angle_degrees)  # The chamber taper angle in radians
 t = 1.5  # TODO: Get this from MTK library
@@ -35,13 +37,31 @@ angle_start = total_length - converg_sect_length
 angle_end_point = converg_sect_length * math.tan(angle_radians)
 
 # Points to construct our polyline so we can revolve it
+# chamber_points = [(0, 0),
+#                   (angle_start, 0),
+#                   (angle_start + converg_sect_length, angle_end_point),
+#                   (angle_start + converg_sect_length, angle_end_point + t),
+#                   (angle_start, t),
+#                   (0, t),
+#                   (0, 0)]
+
+# Set up some of our re-usable dimensions
+dtheta = angle_start + converg_sect_length
+
+pointX = dtheta - math.cos(angle_radians) * math.tan(angle_radians) * t
+pointY = angle_end_point - math.sin(angle_radians) * math.tan(angle_radians) * t
+diffX = pointX - angle_start
+diffY = pointY - 0
+
 chamber_points = [(0, 0),
                   (angle_start, 0),
-                  (angle_start + converg_sect_length, angle_end_point),
-                  (angle_start + converg_sect_length, angle_end_point + t),
-                  (angle_start, t),
-                  (0, t),
-                  (0, 0)]
+                  (dtheta, angle_end_point),
+                  (dtheta, angle_end_point - t / math.cos(angle_radians)),
+                  ((dtheta - diffX), (angle_end_point - t / math.cos(angle_radians) - diffY)),
+                  (angle_start, -t),
+                  (0, -t),
+                  (0, 0)
+                  ]
 
 outline = cq.Workplane('XY').polyline(chamber_points)
 
