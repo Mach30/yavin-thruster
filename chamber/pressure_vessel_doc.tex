@@ -18,6 +18,25 @@
 \begin{document}
 \maketitle
 
+% prep code
+\begin{sagesilent}
+from pint import UnitRegistry
+units = UnitRegistry()
+units.default_format = '~L'
+
+def displayFloat(x, formatString):
+  return displayFloatMagnitude(x, formatString) + ' ' + displayUnits(x)
+  
+def displayFloatMagnitude(x, formatString):
+  value = x.magnitude
+  return '$' + formatString.format(float(x.magnitude)) + '$'
+  
+def displayUnits(x):
+  pintStringElements = '{:}'.format(x).split(' ')
+  return '$' + pintStringElements[1] + '$'
+  
+\end{sagesilent}
+
 % start content here
 \section{Requirements}
 The Pressure Vessel Calculation module is being created to model the stresses in the chamber wall for use in a sizing loop to determine the required wall thickness in the Yavin Thruster's chamber.  The resulting wall thickness will be used to drive the chamber wall thickness parameter in the CAD Query model of the Yavin Thruster.  This approach will give a CAD model that can parametrically size and generate geometry from the thruster's design variables and operating conditions. 
@@ -80,15 +99,15 @@ The equations above are in a generic form and can be applied to a number of desi
 \section{Implementation}
 The Pressure Vessel Calculation module is implemented as a Python class (see Listing below).  This section reviews the implementation line by line to provide a white box verification of the module.  
 
-The PressureVessel class has a constructor, a method to size the chamber wall thickness (calculate\_wall\_thickness), and three helper methods (sigma\_tan, sigma\_rad, and max\_stress).  The class opens with its variable declarations in lines 6-13.  The class variables map to the six calculation parameters in Table~\ref{t:parameters}.  The class has two additional variables used to maintain state during the solver routine: the current guess for the outer radius and the radius at the point of interest.  These two variables are required as inputs for the tangential and radial stress calculations.  
+The PressureVessel class has a constructor, a method to size the chamber wall thickness (calculate\_wall\_thickness), and three helper methods (sigma\_tan, sigma\_rad, and max\_stress).  The class opens with its variable declarations in lines 20-27.  The class variables map to the six calculation parameters in Table~\ref{t:parameters}.  The class has two additional variables used to maintain state during the solver routine: the current guess for the outer radius and the radius at the point of interest.  These two variables are required as inputs for the tangential and radial stress calculations.  
 
-The class constructor is implemented in lines 15-22.  The constructor simply needs to assign values to the class variables.  Note how the constructor requires a value for the thickness (t).  This value is used as an initial guess for the wall thickness in the wall sizing loop.  Most of the assignments in the constructor directly pass through the method arguments.  However, the outer radius (line 18) and the radius at the point of interest (line 19) take on derived values based on the discussion above and shown in Table~\ref{t:parameter_mapping}.
+The class constructor is implemented in lines 29-36.  The constructor simply needs to assign values to the class variables.  Note how the constructor requires a value for the thickness (t).  This value is used as an initial guess for the wall thickness in the wall sizing loop.  Most of the assignments in the constructor directly pass through the method arguments.  However, the outer radius (line 32) and the radius at the point of interest (line 33) take on derived values based on the discussion above and shown in Table~\ref{t:parameter_mapping}.
 
 \inputminted[linenos,frame=lines,framesep=2.0\fboxsep]{python}{pressure_vessel_calcs.py}
 
-The wall thickness sizing loop is implemented in the calculate\_wall\_thickness methods (lines 24-52).  The sizing method uses a simple incremental search to size the chamber wall thickness.  This method tests the wall size for conformance to the objective, the minimum wall thickness which yields a maximum stress within material's yield strength, and then increments or decrements the wall thickness by a specified step size as needed until the objective is met.  The method starts by defining the step size and the stress limit (equal to the material's yield strength) in lines 27 and 28.  The sizing loop is implemented in lines 34-50.  The test in line 34 determines if the initial guess for the wall thickness is larger than needed (maximum stress is less than the stress limit indicating the wall is over sized) or less than needed (maximum stress is greater than the stress limit indicating the wall is undersized).  In the first case, the while loop in lines 35-40 iteratively reduces the wall thickness (and outer radius) until the maximum stress is greater than or equal to the stress limit.  Line 42 increments the wall thickness by one step increment since the loop above ran until the wall was one step too small.  The second case (wall thickness is too small) is processed in lines 45-50.  In this case, the while loop iteratively increases the wall thickness (and outer radius) until the maximum stress is less than or equal to the stress limit.  No adjustment is required after this loop as the calculated wall size already yields a design where the maximum stress is less than or equal to the stress limit.  The method concludes by returning the calculated wall thickness in line 52.
+The wall thickness sizing loop is implemented in the calculate\_wall\_thickness methods (lines 38-66).  The sizing method uses a simple incremental search to size the chamber wall thickness.  This method tests the wall size for conformance to the objective, the minimum wall thickness which yields a maximum stress within material's yield strength, and then increments or decrements the wall thickness by a specified step size as needed until the objective is met.  The method starts by defining the step size and the stress limit (equal to the material's yield strength) in lines 41 and 42.  The sizing loop is implemented in lines 48-64.  The test in line 48 determines if the initial guess for the wall thickness is larger than needed (maximum stress is less than the stress limit indicating the wall is over sized) or less than needed (maximum stress is greater than the stress limit indicating the wall is undersized).  In the first case, the while loop in lines 50-54 iteratively reduces the wall thickness (and outer radius) until the maximum stress is greater than or equal to the stress limit.  Line 56 increments the wall thickness by one step increment since the loop above ran until the wall was one step too small.  The second case (wall thickness is too small) is processed in lines 60-64.  In this case, the while loop iteratively increases the wall thickness (and outer radius) until the maximum stress is less than or equal to the stress limit.  No adjustment is required after this loop as the calculated wall size already yields a design where the maximum stress is less than or equal to the stress limit.  The method concludes by returning the calculated wall thickness in line 66.
 
-The remaining methods are the three helper methods used to calculate the tangential stress, the radial stress, and the maximum stress including the factor of safety.  The sigma\_tan method (lines 54-58) calculates the tangential stress using Equation~(\ref{e:sigma_t}).  Visually comparing the source code in lines 57 and 58 to Equation~(\ref{e:sigma_t}) verifies this method is implemented correctly.  Similarly, the sigma\_rad method (lines 60-64) calculates the radial stress using Equation~(\ref{e:sigma_r}).  As before, visually comparing the source code in lines 63 and 64 to Equation~(\ref{e:sigma_r}) confirms it is implemented correctly.  Finally, the max\_stress method (lines 65-68) calculates the maximum stress including the factor of safety by returning the product of the factor of safety and the maximum of the tangential and radial stresses for the current wall thickness.
+The remaining methods are the three helper methods used to calculate the tangential stress, the radial stress, and the maximum stress including the factor of safety.  The sigma\_tan method (lines 68-72) calculates the tangential stress using Equation~(\ref{e:sigma_t}).  Visually comparing the source code in lines 71 and 72 to Equation~(\ref{e:sigma_t}) verifies this method is implemented correctly.  Similarly, the sigma\_rad method (lines 74-78) calculates the radial stress using Equation~(\ref{e:sigma_r}).  As before, visually comparing the source code in lines 77 and 78 to Equation~(\ref{e:sigma_r}) confirms it is implemented correctly.  Finally, the max\_stress method (lines 80-85) calculates the maximum stress including the factor of safety by returning the product of the factor of safety and the maximum of the tangential and radial stresses for the current wall thickness.
 
 \section{Tests}
 [insert test cases and their results into this section]
