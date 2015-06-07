@@ -5,6 +5,15 @@
 
 \usepackage{sagetex}
 \setlength{\sagetexindent}{10ex}
+\usepackage{url}
+
+% add source code formatting support
+\usepackage{minted}
+\usemintedstyle{vs}
+\usepackage{etoolbox}
+\AtBeginEnvironment{minted}{\singlespace%
+\fontsize{10}{10}\selectfont}
+
 
 \begin{document}
 \maketitle
@@ -36,7 +45,7 @@ The key design variables driving the pressure vessel calculation include the cha
 
 
 \section{Theory}
-The chamber wall is being modeled as a thick walled cylinder [add explanation of why this is the correct model].  The sizing loop will find the minimum wall thickness which yields a maximum stress in the chamber wall within the stress material's yield strength, including factor of safety.  The stresses calculated during the sizing loop are the tangential and radial stress.  Equation~(\ref{e:sigma_t}) shows the calculation for the tangential stress in a thick walled cylinder and Equation~(\ref{e:sigma_r}) shows the calculation for the radial stress in a thick walled cylinder \cite{Shigley1989}. 
+A chamber is essentially a hollow cylinder with one end open to the propellant source (the injector face) and the other end converging to the opening where the thrust leaves the chamber to supply the thrust (the throat).  There are two primary models available for analyzing the stress in the walls of a hollow cylinder under pressure:  thin walled cylinders or thick walled cylinders.  The thin walled cylinder model, while simpler, is only valid for cylinders with radius-to-thickness ratios greater than 10.  In order to support chamber geometries regardless of radius-to-thickness ratio, the chamber is being modeled as a thick walled cylinder.  The sizing loop will find the minimum wall thickness which yields a maximum stress in the chamber wall within the material's yield strength, including factor of safety.  The stresses calculated during the sizing loop are the tangential and radial stress.  Equation~(\ref{e:sigma_t}) shows the calculation for the tangential stress in a thick walled cylinder and Equation~(\ref{e:sigma_r}) shows the calculation for the radial stress in a thick walled cylinder \cite{Shigley1989}. 
 
 \begin{equation}
  \label{e:sigma_t}
@@ -48,7 +57,7 @@ The chamber wall is being modeled as a thick walled cylinder [add explanation of
   \sigma_r = \frac{p_i r_i^2 - p_o r_o^2 + r_i^2 r_o^2 (p_o - p_i)/r^2}{r_o^2 - r_i^2}
 \end{equation}
 
-The equations above are in a generic form and can be applied to a number of design scenarios.  Table~\ref{t:parameter_mapping} shows how the variables in Equation~(\ref{e:sigma_t}) and Equation~(\ref{e:sigma_r}) map to the parameters in Table~\ref{t:parameters}.  [Explain the point of interest]
+The equations above are in a generic form and can be applied to a number of design scenarios.  Table~\ref{t:parameter_mapping} shows how the variables in Equation~(\ref{e:sigma_t}) and Equation~(\ref{e:sigma_r}) map to the parameters in Table~\ref{t:parameters}.  The variable $r$, the radius at the point of interest, bears some explanation.  This variable determines where in the thick walled cylinder the stresses are being calculated.  The pressure vessel calculation uses the stress values to size the chamber wall thickness in a sizing loop.  This  sizing loop searches for the minimum wall thickness such that the maximum stress in the chamber wall does not exceed the material strength, including the desired factor of safety.  The radius at the point of interest therefore must be set to yield the maximum stress in the cylinder wall.  For cylinders under tension (those with internal pressures greater than the external pressure like in the chamber wall), the point of highest stress is located at the inner radius.  For cylinders under compression (those with external pressures greater than the internal pressure like submarines), the point of highest stress is located at the outer radius \cite{Kharagpur2015}. 
 
 \begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
   \caption{Pressure Vessel Calculation Parameters}
@@ -69,9 +78,26 @@ The equations above are in a generic form and can be applied to a number of desi
 \end{table}
 
 \section{Implementation}
-[insert code inspection into this section]
+The Pressure Vessel Calculation module is implemented as a Python class (see Listing below).  This section reviews the implementation line by line to provide a white box verification of the module.  
+
+The PressureVessel class has a constructor, a method to size the chamber wall thickness (calculate\_wall\_thickness), and three helper methods (sigma\_tan, sigma\_rad, and max\_stress).  The class opens with its variable declarations in lines 6-13.  The class variables map to the six calculation parameters in Table~\ref{t:parameters}.  The class has two additional variables used to maintain state during the solver routine: the current guess for the outer radius and the radius at the point of interest.  These two variables are required as inputs for the tangential and radial stress calculations.  
+
+The class constructor is implemented in lines 15-22.  The constructor simply needs to assign values to the class variables.  Note how the constructor requires a value for the thickness (t).  This value is used as an initial guess for the wall thickness in the wall sizing loop.  Most of the assignments in the constructor directly pass through the method arguments.  However, the outer radius (line 18) and the radius at the point of interest (line 19) take on derived values based on the discussion above and shown in Table~\ref{t:parameter_mapping}.
+
+\inputminted[linenos,frame=lines,framesep=2.0\fboxsep]{python}{pressure_vessel_calcs.py}
+
+The wall thickness sizing loop is implemented in the calculate\_wall\_thickness methods (lines 24-52).  The sizing method uses a simple incremental search to size the chamber wall thickness.  This method tests the wall size for conformance to the objective, the minimum wall thickness which yields a maximum stress within material's yield strength, and then increments or decrements the wall thickness by a specified step size as needed until the objective is met.  The method starts by defining the step size and the stress limit (equal to the material's yield strength) in lines 27 and 28.  The sizing loop is implemented in lines 34-50.  The test in line 34 determines if the initial guess for the wall thickness is larger than needed (maximum stress is less than the stress limit indicating the wall is over sized) or less than needed (maximum stress is greater than the stress limit indicating the wall is undersized).  In the first case, the while loop in lines 35-40 iteratively reduces the wall thickness (and outer radius) until the maximum stress is greater than or equal to the stress limit.  Line 42 increments the wall thickness by one step increment since the loop above ran until the wall was one step too small.  The second case (wall thickness is too small) is processed in lines 45-50.  In this case, the while loop iteratively increases the wall thickness (and outer radius) until the maximum stress is less than or equal to the stress limit.  No adjustment is required after this loop as the calculated wall size already yields a design where the maximum stress is less than or equal to the stress limit.  The method concludes by returning the calculated wall thickness in line 52.
+
+The remaining methods are the three helper methods used to calculate the tangential stress, the radial stress, and the maximum stress including the factor of safety.  The sigma\_tan method (lines 54-58) calculates the tangential stress using Equation~(\ref{e:sigma_t}).  Visually comparing the source code in lines 57 and 58 to Equation~(\ref{e:sigma_t}) verifies this method is implemented correctly.  Similarly, the sigma\_rad method (lines 60-64) calculates the radial stress using Equation~(\ref{e:sigma_r}).  As before, visually comparing the source code in lines 63 and 64 to Equation~(\ref{e:sigma_r}) confirms it is implemented correctly.  Finally, the max\_stress method (lines 65-68) calculates the maximum stress including the factor of safety by returning the product of the factor of safety and the maximum of the tangential and radial stresses for the current wall thickness.
 
 \section{Tests}
 [insert test cases and their results into this section]
+
+\begin{thebibliography}{9}
+
+\bibitem{Kharagpur2015} Kharagpur, ``Thick cylinders Stresses due to internal and external pressures", \emph{Thin and thick cylinders}, IIT, version 2, \url{http://www.nptel.ac.in/courses/112105125/pdf/module-9\%20lesson-2.pdf}.
+\bibitem{Shigley1989} Shigley, J. and Mischke, C., \emph{Mechanical Engineering Design}, McGraw-Hill, fifth edition ed., 1989.
+
+\end{thebibliography}
 
 \end{document}
