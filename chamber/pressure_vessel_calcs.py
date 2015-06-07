@@ -81,4 +81,4 @@ class PressureVessel:
         """Calculates the max stress including the factor of safety """
         
         return self.fs * max(self.sigma_tan(self.ri, self.ro, self.r, self.p_c, self.p_amb),
-                                            self.sigma_rad(self.ri, self.ro, self.r, self.p_c, self.p_amb))
+                             self.sigma_rad(self.ri, self.ro, self.r, self.p_c, self.p_amb))
