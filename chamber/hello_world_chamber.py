@@ -77,6 +77,9 @@ outline = cq.Workplane('XY').polyline(chamber_points)
 chamber = outline.revolve(360.0, (0, ri.to(units.millimeter).magnitude, 0),
                           (1, ri.to(units.millimeter).magnitude, 0))
 
+# Rotate the chamber so that it's properly aligned for 3D printing
+chamber = chamber.rotate((0, 0, 0), (0, 1, 0), -90)
+
 # Show the outline and/or shell
 # show(outline, (204, 204, 204, 0.0))
 show(chamber, (204, 204, 204, 0.0))
