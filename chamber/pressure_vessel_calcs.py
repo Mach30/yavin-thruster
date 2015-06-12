@@ -24,9 +24,9 @@ class PressureVessel:
     p_c = None                # chamber pressure, needs value assigned
     p_amb = None              # ambient pressure, needs value assigned
     material_strength = None  # target maximum allowable strength (for example yield or ultimate), needs value assigned
-    fs = 2.0                  # factor of safety
+    fs = None                 # factor of safety
 
-    def __init__(self, ri, t, p_c, p_amb, material_strength):
+    def __init__(self, ri, t, p_c, p_amb, material_strength, fs):
         self.ri = ri
         self.t = t            # TODO: look at automatically selecting a guess, maybe based on thick-walled theory (ri/t >= 10)
         self.ro = ri + t
@@ -34,20 +34,21 @@ class PressureVessel:
         self.p_c = p_c
         self.p_amb = p_amb
         self.material_strength = material_strength
+        self.fs = fs
 
     def calculate_wall_thickness(self):
         """Solves for the desired wall thickness based on the inputs given"""
 
-        step_size = 0.001  # Solver step size to find optimal thickness
+        step_size = 0.0001  # Solver step size to find optimal thickness
         stress_limit = self.material_strength  # TODO: Are these terms really interchangeable like this?
 
         # TODO: Do we want to modify copies of ro and t to keep the originals for reference?
         # TODO: The advantange of modifying the class variables is that you end up with a PressureVessel object with
         # TODO: optimized ro and t values that you can access directly, such as pv.ro and pv.t
         # TODO: Replace this solver process with something like a binary search
-        if max_stress() < stress_limit:
+        if self.max_stress() < stress_limit:
             #  Our vessel can handle more stress, so gradually decrease the thickness
-            while max_stress() < stress_limit:
+            while self.max_stress() < stress_limit:
                 self.t -= step_size
 
                 # The new thickness changes our outside radius
@@ -57,7 +58,7 @@ class PressureVessel:
 
         else:
             # Our vessel can't handle the stress, gradually increase the thickness
-            while max_stress() > stress_limit:  
+            while self.max_stress() > stress_limit:  
                 self.t += step_size
 
                 # The new thickness changes our outside radius
