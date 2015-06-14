@@ -22,11 +22,23 @@ import pressure_vessel_calcs
 import cadquery as cq
 from Helpers import show
 
-# Units used
+# Pint units used
 # units.meter
 # units.pascal
+
 # Use this everywhere for Pint integration from now on
 units = UnitRegistry()
+
+
+def mm(value):
+    """
+    A helper function to provide a clean way to convert meters to mm
+    """
+    if value.units == 'meter':
+        return value.to(units.millimeter).magnitude
+    else:
+        raise ValueError('Must be a length unit type to convert to mm.')
+
 
 # Declare before using pressure vessel calculation library
 ri = 20.0e-3 * units.meter
@@ -61,16 +73,14 @@ pointY2 = (theta_end_point - t / math.cos(theta.to(units.radian)))
 diffX = pointX - theta_start
 diffY = pointY - 0
 
-chamber_points = [
-    (0, 0),
-    (theta_start.to(units.millimeter).magnitude, 0),
-    (dtheta.to(units.millimeter).magnitude, theta_end_point.to(units.millimeter).magnitude),
-    (dtheta.to(units.millimeter).magnitude, pointY2.to(units.millimeter).magnitude),
-    ((dtheta - diffX).to(units.millimeter).magnitude, (pointY2 - diffY).to(units.millimeter).magnitude),
-    (theta_start.to(units.millimeter).magnitude, -t.to(units.millimeter).magnitude),
-    (0, -t.to(units.millimeter).magnitude),
-    (0, 0)
-    ]
+chamber_points = [(0, 0),
+                  (mm(theta_start), 0),
+                  (mm(dtheta), mm(theta_end_point)),
+                  (mm(dtheta), mm(pointY2)),
+                  (mm(dtheta - diffX), mm(pointY2 - diffY)),
+                  (mm(theta_start), mm(-t)),
+                  (0, mm(-t)),
+                  (0, 0)]
 
 outline = cq.Workplane('XY').polyline(chamber_points)
 
