@@ -68,18 +68,19 @@ class PressureVessel:
 
         return self.t
 
-    def sigma_tan(self, ri, ro, r, pi, po):
+    def sigma_tan(self):
         """Calculate the tangential stress in thick walled cylinder"""
 
-        return (pi * ri**2 - po * ro**2 - ri**2 * ro**2 * (po - pi) / r**2) / (ro**2 - ri**2)
+        return (self.p_c * self.ri**2 - self.p_amb * self.ro**2 - self.ri**2 * self.ro**2 *
+               (self.p_amb - self.p_c) / self.r**2) / (self.ro**2 - self.ri**2)
 
-    def sigma_rad(self, ri, ro, r, pi, po):
+    def sigma_rad(self):
         """Calculate the radial stress in thick walled cylinder"""
 
-        return (pi * ri**2 - po * ro**2 + ri**2 * ro**2 * (po - pi) / r**2) / (ro**2 - ri**2)
+        return (self.p_c * self.ri**2 - self.p_amb * self.ro**2 + self.ri**2 * self.ro**2 *
+               (self.p_amb - self.p_c) / self.r**2) / (self.ro**2 - self.ri**2)
 
     def max_stress(self):
         """Calculates the max stress including the factor of safety """
 
-        return self.fs * max(self.sigma_tan(self.ri, self.ro, self.r, self.p_c, self.p_amb),
-                             self.sigma_rad(self.ri, self.ro, self.r, self.p_c, self.p_amb))
+        return self.fs * max(self.sigma_tan(), self.sigma_rad())
