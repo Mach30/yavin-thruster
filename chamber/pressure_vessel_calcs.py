@@ -41,7 +41,6 @@ class PressureVessel:
     def calculate_wall_thickness(self):
         """Solves for the desired wall thickness based on the inputs given"""
 
-        #step_size = 0.0001  # Solver step size to find optimal thickness
         stress_limit = self.material_strength  # TODO: Are these terms really interchangeable like this?
 
         # TODO: Do we want to modify copies of ro and t to keep the originals for reference?
@@ -83,4 +82,4 @@ class PressureVessel:
     def max_stress(self):
         """Calculates the max stress including the factor of safety """
 
-        return self.fs * max(self.sigma_tan(), self.sigma_rad())
+        return max(self.sigma_tan(), self.sigma_rad()) * self.fs
