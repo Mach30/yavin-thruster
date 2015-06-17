@@ -39,7 +39,7 @@ def displayUnits(x):
 
 % start content here
 \section{Requirements}
-The Pressure Vessel Calculation module is being created to model the stresses in the chamber wall for use in a sizing loop to determine the required wall thickness in the Yavin Thruster's chamber.  The resulting wall thickness will be used to drive the chamber wall thickness parameter in the CAD Query model of the Yavin Thruster.  This approach will give a CAD model that can parametrically size and generate geometry from the thruster's design variables and operating conditions. 
+The Pressure Vessel Calculation module is being created to model the stresses in the chamber wall for use in a sizing loop to determine the required wall thickness in the Yavin Thruster's chamber.  The resulting wall thickness will be used to drive the chamber wall thickness parameter in the CadQuery model of the Yavin Thruster.  This approach will give a CAD model that can parametrically size and generate geometry from the thruster's design variables and operating conditions. 
 
 The key design variables driving the pressure vessel calculation include the chamber's inner radius, the yield strength of the selected chamber material, the desired factor of safety, and the chamber pressure.  The key operating condition is the ambient pressure.  The single result of running the pressure vessel calculation is the required wall thickness. Metric units will be used for all calculations and results.  Table~\ref{t:parameters} lists all required variables and their units.
 
@@ -64,7 +64,7 @@ The key design variables driving the pressure vessel calculation include the cha
 
 
 \section{Theory}
-A chamber is essentially a hollow cylinder with one end open to the propellant source (the injector face) and the other end converging to the opening where the thrust leaves the chamber to supply the thrust (the throat).  There are two primary models available for analyzing the stress in the walls of a hollow cylinder under pressure:  thin walled cylinders or thick walled cylinders.  The thin walled cylinder model, while simpler, is only valid for cylinders with radius-to-thickness ratios greater than 10.  In order to support chamber geometries regardless of radius-to-thickness ratio, the chamber is being modeled as a thick walled cylinder.  The sizing loop will find the minimum wall thickness which yields a maximum stress in the chamber wall within the material's yield strength, including factor of safety.  The stresses calculated during the sizing loop are the tangential and radial stress.  Equation~(\ref{e:sigma_t}) shows the calculation for the tangential stress in a thick walled cylinder and Equation~(\ref{e:sigma_r}) shows the calculation for the radial stress in a thick walled cylinder \cite{Shigley1989}. 
+A chamber is essentially a hollow cylinder with one end open to the propellant source (the injector face) and the other end converging to the opening where the thrust leaves the chamber to supply the thrust (the throat).  There are two primary models available for analyzing the stress in the walls of a hollow cylinder under pressure:  thin walled cylinders and thick walled cylinders.  The thin walled cylinder model, while simpler, is only valid for cylinders with radius-to-thickness ratios greater than 10.  In order to support chamber geometries regardless of radius-to-thickness ratio the chamber is being modeled as a thick walled cylinder.  The sizing loop will find the minimum wall thickness which yields a maximum stress in the chamber wall within the material's yield strength, including factor of safety.  The stresses calculated during the sizing loop are the tangential and radial stress.  Equation~(\ref{e:sigma_t}) shows the calculation for the tangential stress in a thick walled cylinder and Equation~(\ref{e:sigma_r}) shows the calculation for the radial stress in a thick walled cylinder \cite{Shigley1989}. 
 
 \begin{equation}
  \label{e:sigma_t}
@@ -76,7 +76,7 @@ A chamber is essentially a hollow cylinder with one end open to the propellant s
   \sigma_r = \frac{p_i r_i^2 - p_o r_o^2 + r_i^2 r_o^2 (p_o - p_i)/r^2}{r_o^2 - r_i^2}
 \end{equation}
 
-The equations above are in a generic form and can be applied to a number of design scenarios.  Table~\ref{t:parameter_mapping} shows how the variables in Equation~(\ref{e:sigma_t}) and Equation~(\ref{e:sigma_r}) map to the parameters in Table~\ref{t:parameters}.  The variable $r$, the radius at the point of interest, bears some explanation.  This variable determines where in the thick walled cylinder the stresses are being calculated.  The pressure vessel calculation uses the stress values to size the chamber wall thickness in a sizing loop.  This  sizing loop searches for the minimum wall thickness such that the maximum stress in the chamber wall does not exceed the material strength, including the desired factor of safety.  The radius at the point of interest therefore must be set to yield the maximum stress in the cylinder wall.  For cylinders under tension (those with internal pressures greater than the external pressure like in the chamber wall), the point of highest stress is located at the inner radius.  For cylinders under compression (those with external pressures greater than the internal pressure like submarines), the point of highest stress is located at the outer radius \cite{Kharagpur2015}. 
+The equations above are in a generic form and can be applied to a number of design scenarios.  Table~\ref{t:parameter_mapping} shows how the variables in Equation~(\ref{e:sigma_t}) and Equation~(\ref{e:sigma_r}) map to the parameters in Table~\ref{t:parameters}.  The variable $r$, the radius at the point of interest, bears some explanation.  This variable determines where in the thick walled cylinder the stresses are being calculated.  The pressure vessel calculation uses the maximum stress values to size the chamber wall thickness in a sizing loop.  Therefore, the radius at the point of interest must be set to yield the maximum stress in the cylinder wall.  For cylinders under tension (those with internal pressures greater than the external pressure like in the chamber wall), the point of highest stress is located at the inner radius.  For cylinders under compression (those with external pressures greater than the internal pressure like submarines), the point of highest stress is located at the outer radius \cite{Kharagpur2015}. 
 
 \begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
   \caption{Pressure Vessel Calculation Parameters}
@@ -97,25 +97,203 @@ The equations above are in a generic form and can be applied to a number of desi
 \end{table}
 
 \section{Implementation}
-The Pressure Vessel Calculation module is implemented as a Python class (see Listing below).  This section reviews the implementation line by line to provide a white box verification of the module.  
+The Pressure Vessel Calculation module is implemented as a Python class (see Listing below) and is based on the structural jacket sizing module in the author's PhD research \cite{Simmons2014}.  This section reviews the implementation line by line to provide a white box verification of the module.  
 
-The PressureVessel class has a constructor, a method to size the chamber wall thickness (calculate\_wall\_thickness), and three helper methods (sigma\_tan, sigma\_rad, and max\_stress).  The class opens with its variable declarations in lines 20-27.  The class variables map to the six calculation parameters in Table~\ref{t:parameters}.  The class has two additional variables used to maintain state during the solver routine: the current guess for the outer radius and the radius at the point of interest.  These two variables are required as inputs for the tangential and radial stress calculations.  
+The PressureVessel class has a constructor, a method to size the chamber wall thickness (calculate\_wall\_thickness), and three helper methods (sigma\_tan, sigma\_rad, and max\_stress).  The class opens with its variable declarations in lines 20-28.  The class variables map to the six calculation parameters in Table~\ref{t:parameters}.  The class has two additional variables used to maintain state during the solver routine and required as inputs for the tangential and radial stress calculations: the current guess for the outer radius and the radius at the point of interest.  Finally, the class has a variable to control the step size used in the solver.  
 
-The class constructor is implemented in lines 29-36.  The constructor simply needs to assign values to the class variables.  Note how the constructor requires a value for the thickness (t).  This value is used as an initial guess for the wall thickness in the wall sizing loop.  Most of the assignments in the constructor directly pass through the method arguments.  However, the outer radius (line 32) and the radius at the point of interest (line 33) take on derived values based on the discussion above and shown in Table~\ref{t:parameter_mapping}.
+The class constructor is implemented in lines 30-39.  The constructor simply needs to assign values to the class variables.  Note how the constructor requires a value for the thickness (t).  This value is used as an initial guess for the wall thickness in the wall sizing loop.  Most of the assignments in the constructor directly pass through the method arguments.  However, the outer radius (line 33) and the radius at the point of interest (line 34) take on derived values based on the discussion above and shown in Table~\ref{t:parameter_mapping}.
 
 \inputminted[breaklines,linenos,frame=lines,framesep=2.0\fboxsep]{python}{pressure_vessel_calcs.py}
 
-The wall thickness sizing loop is implemented in the calculate\_wall\_thickness methods (lines 38-66).  The sizing method uses a simple incremental search to size the chamber wall thickness.  This method tests the wall size for conformance to the objective, the minimum wall thickness which yields a maximum stress within material's yield strength, and then increments or decrements the wall thickness by a specified step size as needed until the objective is met.  The method starts by defining the step size and the stress limit (equal to the material's yield strength) in lines 41 and 42.  The sizing loop is implemented in lines 48-64.  The test in line 48 determines if the initial guess for the wall thickness is larger than needed (maximum stress is less than the stress limit indicating the wall is over sized) or less than needed (maximum stress is greater than the stress limit indicating the wall is undersized).  In the first case, the while loop in lines 50-54 iteratively reduces the wall thickness (and outer radius) until the maximum stress is greater than or equal to the stress limit.  Line 56 increments the wall thickness by one step increment since the loop above ran until the wall was one step too small.  The second case (wall thickness is too small) is processed in lines 60-64.  In this case, the while loop iteratively increases the wall thickness (and outer radius) until the maximum stress is less than or equal to the stress limit.  No adjustment is required after this loop as the calculated wall size already yields a design where the maximum stress is less than or equal to the stress limit.  The method concludes by returning the calculated wall thickness in line 66.
+The wall thickness sizing loop is implemented in the calculate\_wall\_thickness methods (lines 41-68).  The sizing method uses a simple incremental search to size the chamber wall thickness.  This method tests the wall size for conformance to the objective, the minimum wall thickness which yields a maximum stress, including factor of safety, within material's yield strength, and then increments or decrements the wall thickness by a specified step size as needed until the objective is met.  The method starts by defining the stress limit (equal to the material's yield strength) in line 44.  The sizing loop is implemented in lines 50-66.  The test in line 50 determines if the initial guess for the wall thickness is larger than needed (maximum stress is less than the stress limit indicating the wall is over sized) or less than needed (maximum stress is greater than the stress limit indicating the wall is undersized).  In the first case, the while loop in lines 52-56 iteratively reduces the wall thickness (and outer radius) until the maximum stress is greater than or equal to the stress limit.  Line 58 increments the wall thickness by one step increment since the loop above ran until the wall was one step too small.  The second case (wall thickness is too small) is processed in lines 62-66.  In this case, the while loop iteratively increases the wall thickness (and outer radius) until the maximum stress is less than or equal to the stress limit.  No adjustment is required after this loop as the calculated wall size already yields a design where the maximum stress is less than or equal to the stress limit.  The method concludes by returning the calculated wall thickness in line 68.
 
-The remaining methods are the three helper methods used to calculate the tangential stress, the radial stress, and the maximum stress including the factor of safety.  The sigma\_tan method (lines 68-72) calculates the tangential stress using Equation~(\ref{e:sigma_t}).  Visually comparing the source code in lines 71 and 72 to Equation~(\ref{e:sigma_t}) verifies this method is implemented correctly.  Similarly, the sigma\_rad method (lines 74-78) calculates the radial stress using Equation~(\ref{e:sigma_r}).  As before, visually comparing the source code in lines 77 and 78 to Equation~(\ref{e:sigma_r}) confirms it is implemented correctly.  Finally, the max\_stress method (lines 80-85) calculates the maximum stress including the factor of safety by returning the product of the factor of safety and the maximum of the tangential and radial stresses for the current wall thickness.
+The remaining methods are the three helper methods used to calculate the tangential stress, the radial stress, and the maximum stress including the factor of safety.  The sigma\_tan method (lines 70-74) calculates the tangential stress using Equation~(\ref{e:sigma_t}).  Visually comparing the source code in lines 73 and 74 to Equation~(\ref{e:sigma_t}) verifies this method is implemented correctly.  Similarly, the sigma\_rad method (lines 76-80) calculates the radial stress using Equation~(\ref{e:sigma_r}).  As before, visually comparing the source code in lines 79 and 80 to Equation~(\ref{e:sigma_r}) confirms it is implemented correctly.  Finally, the max\_stress method (lines 82-85) calculates the maximum stress including the factor of safety by returning the product of the factor of safety and the maximum of the tangential and radial stresses for the current wall thickness.
 
 \section{Tests}
-[insert test cases and their results into this section]
+This section provides additional verification of the Pressure Vessel Calculation module in the form of nine test cases.  The test cases come from data collected in the author's dissertation as part of a sensitivity study investigating the impact of material selection on structural jacket wall thickness (see Figure~\ref{f:doe3_thickness_plot}) \cite{Simmons2014}.  Three test cases were selected from each of three materials (INCONEL 718, Alloy 188, Oxygen-Free Copper) to provide a range of material strengths, geometries, and chamber pressures.
+
+\begin{figure}[!ht]
+  \begin{center}
+  \includegraphics[width=\textwidth]{doe3_chamber_sj_thickness_zoomed_updated.png} 
+  \caption{Simulation Results from Dissertation Used to Derive Test Cases \cite{Simmons2014}}
+  \label{f:doe3_thickness_plot}
+  \end{center}
+\end{figure}
+
+The following code demonstrates how the tests were conducted using the design point for the demonstration chamber CAD model.  For each design point, a PressureVessel object is created, with the class variables set to values including their units implemented using the Python Pint library.  The calculate\_wall\_thickness method is then called to solve for the required wall thickness.
+
+\begin{sageblock}
+from pressure_vessel_calcs import PressureVessel
+
+pv0 = PressureVessel(20.0e-3 * units.meter,
+                     2e-3 * units.meter,
+                     3.5e6 * units.pascal,
+                     101325 * units.pascal,
+                     40e6 * units.pascal,
+                     2.0,
+                     0.0001 * units.meter)
+pv0.calculate_wall_thickness()
+\end{sageblock}
+
+\begin{sagesilent}
+# test cases
+# data comes from dissertation material sensitivity study for chamber SJ thickness
+# 3 data points from each of three materials to get a range of responses
+# materials: INCONEL 718, Alloy 188, Ox-Free Copper
+# selected runs: (63, 57, 55), (45, 40, 37), (18, 11, 13)
+
+# Notes
+# ri = radial_chamSJ_in.value(0)
+# t = 0.1 inch
+# p_c = max(LOX_Pressure[])
+# p_amb = 0.001 psi
+# material_strength = SJChamber_Fy
+
+fs = 1.5
+step_size = 0.001 * units.inch
+
+# test 1: INCONEL 718, run 63
+t1 = 0.067*units.inch
+pv1 = PressureVessel(5.2399 * units.inch,
+                     0.1 * units.inch,
+                     1333.29 * units.psi,
+                     0.001 * units.psi,
+                     156e3 * units.psi,
+                     fs,
+                     step_size)
+pv1.calculate_wall_thickness()
+
+# test 2: INCONEL 718, run 57
+t2 = 0.218 * units.inch
+pv2 = PressureVessel(5.2399 * units.inch,
+                     0.1 * units.inch,
+                     4236.04 * units.psi,
+                     0.001 * units.psi,
+                     156e3 * units.psi,
+                     fs,
+                     step_size)
+pv2.calculate_wall_thickness()
+
+# test 3: INCONEL 718, run 55
+t3 = 0.387*units.inch
+pv3 = PressureVessel(9.5433 * units.inch,
+                     0.1 * units.inch,
+                     4125.37 * units.psi,
+                     0.001 * units.psi,
+                     156e3 * units.psi,
+                     fs,
+                     step_size)
+pv3.calculate_wall_thickness()
+
+# test 4: Alloy 188, run 45
+t4 = 0.256*units.inch
+pv4 = PressureVessel(5.2399 * units.inch,
+                     0.1 * units.inch,
+                     1333.29 * units.psi,
+                     0.001 * units.psi,
+                     42e3 * units.psi,
+                     fs,
+                     step_size)
+pv4.calculate_wall_thickness()
+
+# test 5: Alloy 188, run 40
+t5 = 0.926*units.inch
+pv5 = PressureVessel(9.5433 * units.inch,
+                     0.1 * units.inch,
+                     2583.42 * units.psi,
+                     0.001 * units.psi,
+                     42e3 * units.psi,
+                     fs,
+                     step_size)
+pv5.calculate_wall_thickness()
+
+# test 6: Alloy 188, run 37
+t6 = 1.527*units.inch
+pv6 = PressureVessel(9.5433 * units.inch,
+                     0.1 * units.inch,
+                     4125.37 * units.psi,
+                     0.001 * units.psi,
+                     42e3 * units.psi,
+                     fs,
+                     step_size)
+pv6.calculate_wall_thickness()
+
+# test 7: Ox-Free Copper, run 18
+t7 = 0.189*units.inch
+pv7 = PressureVessel(5.2399 * units.inch,
+                     0.1 * units.inch,
+                     1333.29 * units.psi,
+                     0.001 * units.psi,
+                     56.6e3 * units.psi,
+                     fs,
+                     step_size)
+pv7.calculate_wall_thickness()
+
+# test 8: Ox-Free Copper, run 11
+t8 = 1.179*units.inch
+pv8 = PressureVessel(7.745 * units.inch,
+                     0.1 * units.inch,
+                     4351.64 * units.psi,
+                     0.001 * units.psi,
+                     46.4e3 * units.psi,
+                     fs,
+                     step_size)
+pv8.calculate_wall_thickness()
+
+# test 9: Ox-Free Copper, run 13
+t9 = 2.426*units.inch
+pv9 = PressureVessel(9.5433 * units.inch,
+                     0.1 * units.inch,
+                     2583.42 * units.psi,
+                     0.001 * units.psi,
+                     17.4e3 * units.psi,
+                     fs,
+                     step_size)
+pv9.calculate_wall_thickness()
+\end{sagesilent}
+
+The results of the nine tests are shown the first nine rows of Table~\ref{t:test_results} (the final shows the results for the demonstration design point calculation above).  Each row lists the input parameters for the corresponding test case, the calculated thickness ($t_{calc}$), and the thickness as reported in the author's dissertation ($t$).  Note, the original analyses were calculated in US units.  The original units were used to run the test cases and converted to the units shown in Table~\ref{t:test_results}  to maintain consistency with the Yavin Thruster's use of metric units and to provide compact presentation.  
+
+\begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
+  \caption{Pressure Vessel Calculation Test}
+  \centering
+  \begin{tabular}{rrrrrr}
+   $r_i$ & $P_c$ & $P_{amb}$ & $\sigma_y$ & $t_{calc}$ & $t$\\
+	\hline\hline
+     \sagestr{displayFloat(pv1.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv1.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv1.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv1.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv1.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t1.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv2.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv2.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv2.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv2.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv2.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t2.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv3.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv3.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv3.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv3.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv3.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t3.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv4.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv4.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv4.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv4.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv4.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t4.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv5.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv5.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv5.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv5.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv5.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t5.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv6.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv6.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv6.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv6.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv6.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t6.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv7.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv7.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv7.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv7.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv7.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t7.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv8.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv8.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv8.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv8.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv8.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t8.to(units.millimeter), '{0:.1f}')} \\	
+     
+     \sagestr{displayFloat(pv9.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv9.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv9.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv9.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv9.t.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(t9.to(units.millimeter), '{0:.1f}')} \\	
+         \hline \\ \hline
+
+            \sagestr{displayFloat(pv0.ri.to(units.millimeter), '{0:.1f}')} & \sagestr{displayFloat(pv0.p_c.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv0.p_amb.to(units.kilopascal), '{0:.1f}')} & \sagestr{displayFloat(pv0.material_strength.to(units.megapascal), '{0:.1f}')}   & \sagestr{displayFloat(pv0.t.to(units.millimeter), '{0:.1f}')} & \\
+	
+	\hline
+  \end{tabular}
+ \label{t:test_results}
+\end{table}
+
+As can be seen in Table~\ref{t:test_results}, the Pressure Vessel Calculation module passes all nine tests.  For each test case the calculated wall thickness matches the thickness as reported in the author's dissertation.  When combined with the white box verification in the previous section, these tests demonstrates the Pressure Vessel Calculation module correctly sizes the the wall thickness for the given design point.
+
 
 \begin{thebibliography}{9}
 
-\bibitem{Kharagpur2015} Kharagpur, ``Thick cylinders Stresses due to internal and external pressures", \emph{Thin and thick cylinders}, IIT, version 2, \url{http://www.nptel.ac.in/courses/112105125/pdf/module-9\%20lesson-2.pdf}.
 \bibitem{Shigley1989} Shigley, J. and Mischke, C., \emph{Mechanical Engineering Design}, McGraw-Hill, fifth edition ed., 1989.
+\bibitem{Kharagpur2015} Kharagpur, ``Thick cylinders Stresses due to internal and external pressures", \emph{Thin and thick cylinders}, IIT, version 2, \url{http://www.nptel.ac.in/courses/112105125/pdf/module-9\%20lesson-2.pdf}.
+\bibitem{Simmons2014} Simmons, J. \textit{Design and Evaluation of Dual-Expander Aerospike Nozzle Upper-Stage Engine}, PhD dissertation (\url{http://www.dtic.mil/get-tr-doc/pdf?AD=ADA609649}), Air Force Institute of Technology, 2014.
 
 \end{thebibliography}
 
