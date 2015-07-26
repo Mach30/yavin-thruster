@@ -18,6 +18,10 @@
 \begin{document}
 \maketitle
 
+\abstract{
+Mach 30 is designing a compressed air powered cold gas thruster (Yavin) for educational kits and volunteer training.  The Yavin project requires a number of engineering calculations.  This report covers the calculations required to determine the minimum necessary wall thickness for the chamber based on the design and operating conditions.  These calculations are  implemented in the PressureVessel class.  The PressureVessel class models the chamber as a thick walled cylinder and uses a simple incremental search to determine the minimum necessary wall thickness.  Verification for the PressureVessel class included white box verification, in the form of a detailed inspection of the source code, and black box verification, in the form of nine test cases from the author's PhD dissertation.  For each test case the calculated wall thickness matched the expected thickness.  This combination of white and black box verification demonstrates the PressureVessel class correctly calculates the wall thickness.
+}
+
 % prep code
 \begin{sagesilent}
 from pint import UnitRegistry
@@ -42,6 +46,8 @@ def displayUnits(x):
 The Pressure Vessel Calculation module is being created to model the stresses in the chamber wall for use in a sizing loop to determine the required wall thickness in the Yavin Thruster's chamber.  The resulting wall thickness will be used to drive the chamber wall thickness parameter in the CadQuery model of the Yavin Thruster.  This approach will give a CAD model that can parametrically size and generate geometry from the thruster's design variables and operating conditions. 
 
 The key design variables driving the pressure vessel calculation include the chamber's inner radius, the yield strength of the selected chamber material, the desired factor of safety, and the chamber pressure.  The key operating condition is the ambient pressure.  The single result of running the pressure vessel calculation is the required wall thickness. Metric units will be used for all calculations and results.  Table~\ref{t:parameters} lists all required variables and their units.
+
+\clearpage
 
 \begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
   \caption{Pressure Vessel Calculation Parameters}
@@ -252,7 +258,9 @@ pv9 = PressureVessel(9.5433 * units.inch,
 pv9.calculate_wall_thickness()
 \end{sagesilent}
 
-The results of the nine tests are shown the first nine rows of Table~\ref{t:test_results} (the final shows the results for the demonstration design point calculation above).  Each row lists the input parameters for the corresponding test case, the calculated thickness ($t_{calc}$), and the thickness as reported in the author's dissertation ($t$).  Note, the original analyses were calculated in US units.  The original units were used to run the test cases and converted to the units shown in Table~\ref{t:test_results}  to maintain consistency with the Yavin Thruster's use of metric units and to provide compact presentation.  
+The results of the nine tests are shown the first nine rows of Table~\ref{t:test_results} (the final row shows the results for the demonstration design point calculation above).  Each row lists the input parameters for the corresponding test case, the calculated thickness ($t_{calc}$), and the thickness as reported in the author's dissertation ($t$).  Note, the original analyses were calculated in US units.  The original units were used to run the test cases and converted to the units shown in Table~\ref{t:test_results}  to maintain consistency with the Yavin Thruster's use of metric units and to provide compact presentation.  
+
+\clearpage
 
 \begin{table}[ht!]% no placement specified: defaults to here, top, bottom, page
   \caption{Pressure Vessel Calculation Test}
@@ -286,7 +294,7 @@ The results of the nine tests are shown the first nine rows of Table~\ref{t:test
  \label{t:test_results}
 \end{table}
 
-As can be seen in Table~\ref{t:test_results}, the Pressure Vessel Calculation module passes all nine tests.  For each test case the calculated wall thickness matches the thickness as reported in the author's dissertation.  When combined with the white box verification in the previous section, these tests demonstrates the Pressure Vessel Calculation module correctly sizes the the wall thickness for the given design point.
+As can be seen in Table~\ref{t:test_results}, the Pressure Vessel Calculation module passes all nine tests.  For each test case the calculated wall thickness matches the thickness as reported in the author's dissertation.  When combined with the white box verification in the previous section, these tests demonstrates the Pressure Vessel Calculation module correctly calculates the the wall thickness.
 
 
 \begin{thebibliography}{9}
