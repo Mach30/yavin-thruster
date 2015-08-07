@@ -1,8 +1,11 @@
-import cadquery as cq
+__author__ = 'jwright'
+
+import cadquery
 from Helpers import show
 
 # The points for the outline of the spike
 spike_points = [
+    (7.32802871061466, 11.007605598221),
     (7.31058536987926, 11.0165328678702),
     (7.29209592126546, 11.0270071060423),
     (7.27238894084329, 11.039277065777),
@@ -48,8 +51,11 @@ spike_points = [
 ]
 
 # The points defining the combustion chamber outline
-chamber_points = [
+chamber_points = (
     (8.5868, 0),
+    (8.5868, 1.1),
+    (8.5868, 3.3),
+    (8.5868, 5.5),
     (8.5868, 7.7),
     (8.0868, 8.8),
     (8.0868, 9.9),
@@ -59,9 +65,13 @@ chamber_points = [
     (7.8966, 11),
     (8.3989, 9.9),
     (8.9071, 8.8),
-    (8.9071, 0),
+    (8.9071, 7.7),
+    (8.9071, 5.5),
+    (8.9071, 3.3),
+    (8.9159, 1.1),
+    (8.9159, 0),
     (8.5868, 0)
-]
+)
 
 injector_points = (
     (7.1139, 0),
@@ -70,17 +80,22 @@ injector_points = (
     (7.1139, -2)
 )
 
-spike = cq.Workplane('XZ').moveTo(7.32802871061466, 11.007605598221)\
-                          .spline(spike_points).lineTo(0.0, 11.007605598221)\
-                          .close()
-chamber = cq.Workplane('XZ').polyline(chamber_points)
-injector = cq.Workplane('XZ').polyline(injector_points)
+# Define the workplane that we'll be drawing the outline of the aerospike on
+#aerospike = cadquery.Workplane("XY").lineTo(3.0,0).spline(spike_points) #\
+                                    # .polyline(chamber_points) \
+                                    # .polyline(injector_points) \
+                                    # .revolve()
 
-spike = spike.revolve()
-chamber = chamber.revolve()
-injector = injector.revolve()
+s = cadquery.Workplane(cadquery.Plane.XY())
+sPnts = [
+    (2.75,1.5),
+    (2.5,1.75),
+    (2.0,1.5),
+    (1.5,1.0),
+    (1.0,1.25),
+    (0.5,1.0),
+    (0,1.0)
+]
+r = s.moveTo(7.32802871061466, 11.007605598221).spline(spike_points)
 
-# Use the following to render your model with grey RGB and no transparency
-show(spike, (204, 204, 204, 0.0))
-show(chamber, (204, 204, 204, 0.0))
-show(injector, (204, 204, 204, 0.0))
+show(r, (242, 174, 114, 0.5))
