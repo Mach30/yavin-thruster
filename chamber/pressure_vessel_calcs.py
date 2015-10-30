@@ -20,17 +20,19 @@ class PressureVessel:
     ri = None                 # inner radius, needs a value assigned
     ro = None                 # outer radius, calculated from inner radius and thickness
     r = None                  # radius of interest in the stress calculations, generally set to position of max stress (ri for tension, r0 for compression)
-    t = None                  # initial guess for thickness, needs value assigned
+    t_guess = None                  # initial guess for thickness, needs value assigned
     p_c = None                # chamber pressure, needs value assigned
     p_amb = None              # ambient pressure, needs value assigned
     material_strength = None  # target maximum allowable strength (for example yield or ultimate), needs value assigned
     fs = None                 # factor of safety
     step_size = None
 
-    def __init__(self, ri, t, p_c, p_amb, material_strength, fs, step_size):
+    def __init__(self, ri, t_guess, p_c, p_amb, material_strength, fs, step_size):
         self.ri = ri
-        self.t = t            # TODO: look at automatically selecting a guess, maybe based on thick-walled theory (ri/t >= 10)
-        self.ro = ri + t
+        # TODO: look at automatically selecting a guess, maybe based on thick-walled theory (ri/t >= 10)
+        self.t_guess = t_guess
+        self.t_calc = t_guess
+        self.ro = ri + t_guess
         self.r = ri
         self.p_c = p_c
         self.p_amb = p_amb
@@ -50,22 +52,22 @@ class PressureVessel:
         if self.max_stress() < stress_limit:
             #  Our vessel can handle more stress, so gradually decrease the thickness
             while self.max_stress() < stress_limit:
-                self.t -= self.step_size
+                self.t_calc -= self.step_size
 
                 # The new thickness changes our outside radius
-                self.ro = self.ri + self.t
+                self.ro = self.ri + self.t_calc
 
-            self.t += self.step_size  # the while look exits after one too many steps, add one back
+            self.t_calc += self.step_size  # the while look exits after one too many steps, add one back
 
         else:
             # Our vessel can't handle the stress, gradually increase the thickness
             while self.max_stress() > stress_limit:
-                self.t += self.step_size
+                self.t_calc += self.step_size
 
                 # The new thickness changes our outside radius
-                self.ro = self.ri + self.t
+                self.ro = self.ri + self.t_calc
 
-        return self.t
+        return self.t_calc
 
     def sigma_tan(self):
         """Calculate the tangential stress in thick walled cylinder"""

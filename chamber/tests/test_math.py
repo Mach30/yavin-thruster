@@ -28,7 +28,7 @@ class TestPressureVesselCalcs(unittest.TestCase):
 
         pv1.calculate_wall_thickness()
 
-        self.assertAlmostEqual(t1.magnitude, round(pv1.t.magnitude, 3), delta=0.001001)
+        self.assertAlmostEqual(t1.magnitude, round(pv1.t_calc.magnitude, 3), delta=0.001001)
 
     def test_pv2(self):
         """
@@ -54,7 +54,7 @@ class TestPressureVesselCalcs(unittest.TestCase):
 
         pv2.calculate_wall_thickness()
 
-        self.assertAlmostEqual(t2.magnitude, round(pv2.t.magnitude, 3), delta=0.001001)
+        self.assertAlmostEqual(t2.magnitude, round(pv2.t_calc.magnitude, 3), delta=0.001001)
 
     def test_pv3(self):
         """
@@ -80,4 +80,4 @@ class TestPressureVesselCalcs(unittest.TestCase):
 
         pv3.calculate_wall_thickness()
 
-        self.assertAlmostEqual(t3.magnitude, round(pv3.t.magnitude, 3), delta=0.001001)
+        self.assertAlmostEqual(t3.magnitude, round(pv3.t_calc.magnitude, 3), delta=0.001001)
