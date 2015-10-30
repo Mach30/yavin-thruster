@@ -40,6 +40,9 @@ class PressureVessel:
         self.fs = fs
         self.step_size = step_size
 
+        if self.step_size is None or self.step_size == 0:
+            raise ValueError("step size must be non-zero")
+
     def calculate_wall_thickness(self):
         """Solves for the desired wall thickness based on the inputs given"""
 

@@ -1,83 +1,65 @@
 import unittest
 from pint import UnitRegistry
 from pressure_vessel_calcs import *
-
+from tests.pressure_vessel_test_case_dataset import *
 
 class TestPressureVesselCalcs(unittest.TestCase):
-    def test_pv1(self):
-        """
-        The first test case of the pressure vessel calculations. Based on J. Simmons' dissertation.
-        """
-        # test 1: INCONEL 718, run 63
+    test_case_dataset = PressureVesselTestCaseDataset()
 
+    def test_step_size_validation(self):
         units = UnitRegistry()
 
-        fs = 1.5
-        step_size = 0.001 * units.inch
+        try:
+            pv = PressureVessel(5.2399 * units.inch,
+                                0.1 * units.inch,
+                                4236.04 * units.psi,
+                                0.001 * units.psi,
+                                156e3 * units.psi,
+                                1.5,
+                                0)
+            self.fail('Expected a ValueError to be thrown due to step size being 0')
+        except ValueError:
+            pass
 
-        # The thickness that we expect
-        t1 = 0.067 * units.inch
+        try:
+            pv = PressureVessel(5.2399 * units.inch,
+                                0.1 * units.inch,
+                                4236.04 * units.psi,
+                                0.001 * units.psi,
+                                156e3 * units.psi,
+                                1.5,
+                                None)
+            self.fail('Expected a ValueError to be thrown due to step size being None')
+        except ValueError:
+            pass
 
-        pv1 = PressureVessel(5.2399 * units.inch,
-                             0.1 * units.inch,
-                             1333.29 * units.psi,
-                             0.001 * units.psi,
-                             156e3 * units.psi,
-                             fs,
-                             step_size)
-
-        pv1.calculate_wall_thickness()
-
-        self.assertAlmostEqual(t1.magnitude, round(pv1.t_calc.magnitude, 3), delta=0.001001)
+    def test_pv1(self):
+        self._test_dataset_item(0)
 
     def test_pv2(self):
-        """
-        The second test case of the pressure vessel calculations. Based on J. Simmons' dissertation.
-        """
-        # test 2: INCONEL 718, run 57
-
-        units = UnitRegistry()
-
-        fs = 1.5
-        step_size = 0.001 * units.inch
-
-        # The thickness that we expect
-        t2 = 0.218 * units.inch
-
-        pv2 = PressureVessel(5.2399 * units.inch,
-                             0.1 * units.inch,
-                             4236.04 * units.psi,
-                             0.001 * units.psi,
-                             156e3 * units.psi,
-                             fs,
-                             step_size)
-
-        pv2.calculate_wall_thickness()
-
-        self.assertAlmostEqual(t2.magnitude, round(pv2.t_calc.magnitude, 3), delta=0.001001)
+        self._test_dataset_item(1)
 
     def test_pv3(self):
-        """
-        The third test case of the pressure vessel calculations. Based on J. Simmons' dissertation.
-        """
-        # test 3: INCONEL 718, run 55
+        self._test_dataset_item(2)
 
-        units = UnitRegistry()
+    def test_pv4(self):
+        self._test_dataset_item(3)
 
-        fs = 1.5
-        step_size = 0.001 * units.inch
+    def test_pv5(self):
+        self._test_dataset_item(4)
 
-        # The thickness that we expect
-        t3 = 0.387*units.inch
+    def test_pv6(self):
+        self._test_dataset_item(5)
 
-        pv3 = PressureVessel(9.5433 * units.inch,
-                             0.1 * units.inch,
-                             4125.37 * units.psi,
-                             0.001 * units.psi,
-                             156e3 * units.psi,
-                             fs,
-                             step_size)
+    def test_pv7(self):
+        self._test_dataset_item(6)
 
-        pv3.calculate_wall_thickness()
+    def test_pv8(self):
+        self._test_dataset_item(7)
 
-        self.assertAlmostEqual(t3.magnitude, round(pv3.t_calc.magnitude, 3), delta=0.001001)
+    def test_pv9(self):
+        self._test_dataset_item(8)
+
+    def _test_dataset_item(self, item_number):
+        tc_data = self.test_case_dataset[item_number]
+        self.assertAlmostEqual(tc_data.t_expected.magnitude, round(tc_data.t_calc.magnitude, 3), delta=0.001001)
