@@ -1,7 +1,7 @@
 import unittest
 from pint import UnitRegistry
-from lib.chamber.pressure_vessel_calcs import *
-from tests.chamber.pressure_vessel_test_case_dataset import *
+from lib.chamber import PressureVessel
+from . import PressureVesselTestCaseDataset
 
 class TestPressureVesselCalcs(unittest.TestCase):
     test_case_dataset = PressureVesselTestCaseDataset()

@@ -1,4 +1,4 @@
-from lib.chamber.pressure_vessel_calcs import *
+from lib.chamber import PressureVessel
 from pint import UnitRegistry
 
 class PressureVesselTestCaseDataset():

@@ -1,2 +1,4 @@
 
-__all__ = ['test_math', 'test_cad', 'pressure_vessel_test_case_dataset']
+from .pressure_vessel_test_case_dataset import PressureVesselTestCaseDataset
+
+__all__ = ['PressureVesselTestCaseDataset']
