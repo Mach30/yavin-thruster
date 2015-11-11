@@ -15,7 +15,7 @@
 import math
 
 
-class PressureVessel:
+class PressureVessel(object):
     # Variables used to calculate wall thickness
     ri = None                 # inner radius, needs a value assigned
     ro = None                 # outer radius, calculated from inner radius and thickness
