@@ -20,7 +20,6 @@ import math
 from pint import UnitRegistry
 import pressure_vessel_calcs
 import cadquery as cq
-from Helpers import show
 
 # Pint units used
 # units.meter
@@ -82,6 +81,3 @@ class HelloWorldChamber(object):
         chamber = chamber.rotate((0, 0, 0), (0, 1, 0), -90)
 
         return chamber
-
-#chamber = HelloWorldChamber().build()
-#show(chamber, (204, 204, 204, 0.0))
