@@ -1,6 +1,5 @@
 import sys
 import unittest
-from pint import UnitRegistry
 from lib.chamber import PressureVessel
 from . import PressureVesselTestCaseDataset
 

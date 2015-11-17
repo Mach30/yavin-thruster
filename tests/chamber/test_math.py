@@ -1,5 +1,5 @@
 import unittest
-from pint import UnitRegistry
+from lib.pint_ext import PintExtUnitRegistry
 from lib.chamber import PressureVessel
 from . import PressureVesselTestCaseDataset
 
@@ -7,7 +7,7 @@ class TestPressureVesselCalcs(unittest.TestCase):
     test_case_dataset = PressureVesselTestCaseDataset()
 
     def test_step_size_validation(self):
-        units = UnitRegistry()
+        units = PintExtUnitRegistry()
 
         try:
             pv = PressureVessel(5.2399 * units.inch,

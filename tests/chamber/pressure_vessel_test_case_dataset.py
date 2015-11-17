@@ -1,11 +1,11 @@
 from lib.chamber import PressureVessel
-from pint import UnitRegistry
+from lib.pint_ext import PintExtUnitRegistry
 
 class PressureVesselTestCaseDataset():
     _datatable = []
 
     def __init__(self):
-        units = UnitRegistry()
+        units = PintExtUnitRegistry()
 
         t_guess = 0.1 * units.inch
         p_amb = 0.001 * units.psi

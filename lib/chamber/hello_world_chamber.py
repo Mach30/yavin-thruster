@@ -17,7 +17,7 @@
 # run this script. https://github.com/jmwright/cadquery-freecad-module
 
 import math
-from pint import UnitRegistry
+from lib.pint_ext import PintExtUnitRegistry
 import pressure_vessel_calcs
 import cadquery as cq
 
@@ -26,7 +26,7 @@ import cadquery as cq
 # units.pascal
 
 # Use this everywhere for Pint integration from now on
-units = UnitRegistry()
+units = PintExtUnitRegistry()
 
 
 def mm(value):
