@@ -73,7 +73,7 @@ class TestHelloWorldChamber(unittest.TestCase):
         # TODO: Instantiate the HelloWorldChamber instance with the current test case data
 
         # The solid that we need to test the dimensions of
-        # chamber = HelloWorldChamber().build(tc_data.ri, tc_data.t_guess, tc_data.p_c, tc_data.p_amb,
-        #                                     tc_data.material_strength, tc_data.fs, tc_data.step_size)
+        chamber = HelloWorldChamber().build(tc_data.ri, tc_data.t_guess, tc_data.p_c, tc_data.p_amb,
+                                            tc_data.material_strength, tc_data.fs, tc_data.step_size)
        
         self.assertEqual(1, 1)

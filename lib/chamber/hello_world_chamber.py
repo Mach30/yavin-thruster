@@ -33,7 +33,7 @@ def mm(value):
     """
     A helper function to provide a clean way to convert meters to mm
     """
-    if value.units == 'meter':
+    if value.units == 'meter' or value.units == 'inch':
         return value.to(units.millimeter).magnitude
     else:
         raise ValueError('Must be a length unit type to convert to mm.')
