@@ -18,7 +18,7 @@
 
 import math
 from lib.pint_ext import PintExtUnitRegistry
-import pressure_vessel_calcs
+from lib.chamber import PressureVessel
 import cadquery as cq
 
 # Pint units used
@@ -41,11 +41,11 @@ def mm(value):
 
 class HelloWorldChamber(object):
     def build(self, ri, t_guess, p_c, p_amb, material_strength, fs, step_size):
-        pv = pressure_vessel_calcs.PressureVessel(ri, t_guess, p_c, p_amb, material_strength, fs, step_size)
+        pv = PressureVessel(ri, t_guess, p_c, p_amb, material_strength, fs, step_size)
         t = pv.calculate_wall_thickness()
 
         theta = 45 * units.degree  # The chamber taper angle in degrees
-        total_length = 50.0e-3 * units.meter  # The full length of the chamber exterior
+        total_length = 7.0 * units.inch  # The full length of the chamber exterior
         converg_sect_length = total_length * 0.35  # Converging section length
 
         # Where our taper starts at the business end of the chamber
@@ -65,17 +65,17 @@ class HelloWorldChamber(object):
         diffX = pointX - theta_start
         diffY = pointY - 0
 
-        chamber_points = [(mm(theta_start), 0),
-                          (mm(dtheta), mm(theta_end_point)),
-                          (mm(dtheta), mm(pointY2)),
-                          (mm(dtheta - diffX), mm(pointY2 - diffY)),
-                          (mm(theta_start), mm(-t)),
-                          (0, mm(-t))]
+        chamber_points = [(theta_start.magnitude, 0),
+                          (dtheta.magnitude, theta_end_point.magnitude),
+                          (dtheta.magnitude, pointY2.magnitude),
+                          (dtheta.magnitude - diffX.magnitude, pointY2.magnitude - diffY.magnitude),
+                          (theta_start.magnitude, -t.magnitude),
+                          (0, -t.magnitude)]
 
         outline = cq.Workplane('XY').polyline(chamber_points).close()
 
-        chamber = outline.revolve(360.0, (0, ri.to(units.millimeter).magnitude, 0),
-                                  (1, ri.to(units.millimeter).magnitude, 0))
+        chamber = outline.revolve(360.0, (0, ri.magnitude, 0),
+                                  (1, ri.magnitude, 0))
 
         # Rotate the chamber so that it's properly aligned for 3D printing
         chamber = chamber.rotate((0, 0, 0), (0, 1, 0), -90)

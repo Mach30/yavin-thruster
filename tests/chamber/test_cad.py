@@ -68,10 +68,6 @@ class TestHelloWorldChamber(unittest.TestCase):
         # We've compartmentalized our test case data so that it can be used to test both the math and the geometry
         tc_data = self.test_case_dataset[item_number]
 
-        # TODO: Pull the pressure vessel calculation values out of the HelloWorldChamber
-        # TODO: class and have the values passed in.
-        # TODO: Instantiate the HelloWorldChamber instance with the current test case data
-
         # The solid that we need to test the dimensions of
         chamber = HelloWorldChamber().build(tc_data.ri, tc_data.t_guess, tc_data.p_c, tc_data.p_amb,
                                             tc_data.material_strength, tc_data.fs, tc_data.step_size)
