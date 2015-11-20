@@ -1,3 +1,11 @@
+Documentation
+-------------
+The documentation for things like calculations is done using Mach 30's 
+Mathematics ToolKit (MTK). This documentation is available in its raw format
+under the documentation directory. These can easily be viewed by launching MTK
+from within the root directory, and then within MTK navigating to the 
+documentation directory.
+
 Unit Tests
 ----------
 Unit tests can be executed by using python's built-in unit test discovery and 
