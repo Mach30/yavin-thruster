@@ -1,11 +1,14 @@
+import traceback
 import unittest
 from lib.pint_ext import PintExtUnitRegistry
 from lib.chamber import PressureVessel
 from . import PressureVesselTestCaseDataset
 
 class TestPressureVesselCalcs(unittest.TestCase):
-    test_case_dataset = PressureVesselTestCaseDataset()
 
+    def setUp(self):
+        self.test_case_dataset = PressureVesselTestCaseDataset()
+        
     def test_step_size_validation(self):
         units = PintExtUnitRegistry()
 
@@ -32,6 +35,15 @@ class TestPressureVesselCalcs(unittest.TestCase):
             self.fail('Expected a ValueError to be thrown due to step size being None')
         except ValueError:
             pass
+
+    def test_iterable(self):
+        count = 0
+        for item in self.test_case_dataset:
+            count += 1
+        self.assertEqual(9, count)
+
+    def test_len(self):
+        self.assertEqual(9, len(self.test_case_dataset))
 
     def test_pv1(self):
         self._test_dataset_item(0)

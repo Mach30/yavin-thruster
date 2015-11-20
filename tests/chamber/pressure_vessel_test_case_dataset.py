@@ -1,8 +1,8 @@
+import traceback
 from lib.chamber import PressureVessel
 from lib.pint_ext import PintExtUnitRegistry
 
 class PressureVesselTestCaseDataset():
-    _datatable = []
 
     def __init__(self):
         units = PintExtUnitRegistry()
@@ -12,11 +12,15 @@ class PressureVesselTestCaseDataset():
         fs = 1.5
         step_size = 0.001 * units.inch
 
+        #traceback.print_exc()
+
         ## populatng data without using the PressureVessel class so that any errors with the class,
         ## or any of its methods, will be uncovered during test execution and not during dataset
         ## initialization
 
         ## Inputs and expected values based upon dissertation by J. Simmons
+    
+        self._datatable = []
 
         data = self._Data()
         data.name = 'INCONEL 718, run 63'
@@ -139,8 +143,28 @@ class PressureVesselTestCaseDataset():
             data.step_size,
             data.t_expected)
 
+    def __len__(self):
+        return len(self._datatable)
+
+    def __iter__(self):
+        self.__index = 0
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def next(self):
+        result = None
+        try:
+            result = self[self.__index]
+        except IndexError:
+            raise StopIteration
+        self.__index += 1
+        return result
+
     class _Data:
-        pass
+        def __str__(self):
+            return self.name
  
 class PressureVesselTestCase(PressureVessel):
     name = None
